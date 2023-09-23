@@ -1,7 +1,8 @@
 import './App.css';
 import React from 'react';
-// import Button from 'react-bootstrap/Button';
-import Modal from 'react-bootstrap/Modal';
+import ModalCreate from './component/ModalCreate';
+
+
 
 class App extends React.Component {
   constructor() {
@@ -15,37 +16,55 @@ class App extends React.Component {
       transaksiIN: 0,
       transaksiOUT: 0,
       summary: [
-        {
-          deskripsi : 'Menerima Uang Saku',
-          tanggal : '1 September 2023',
-          nominal : 1000000,
-          category : 'IN'
-        },
-        {
-          deskripsi : 'Menerima Uang Saku 2',
-          tanggal : '10 September 2023',
-          nominal : 1000000,
-          category : 'IN'
-        },
-        {
-          deskripsi : 'Makan Siang',
-          tanggal : '2 September 2023',
-          nominal : 10000,
-          category : 'OUT'
-        }
+        // {
+        //   deskripsi : 'Menerima Uang Saku',
+        //   tanggal : '1 September 2023',
+        //   nominal : 1000000,
+        //   category : 'IN'
+        // },
+        // {
+        //   deskripsi : 'Menerima Uang Saku 2',
+        //   tanggal : '10 September 2023',
+        //   nominal : 1000000,
+        //   category : 'IN'
+        // },
+        // {
+        //   deskripsi : 'Makan Siang',
+        //   tanggal : '2 September 2023',
+        //   nominal : 10000,
+        //   category : 'OUT'
+        // }
       ] 
     }
 
     this.tambahItem = this.tambahItem.bind(this);
+    this.fnHitung = this.fnHitung.bind(this);
   }
 
   tambahItem(objek){
+    let newData = [...this.state.summary, objek]
+    let datalUangIN = newData.filter( (item) => item.category === 'IN' );
+    let nominalUang = datalUangIN.map((item) => item.nominal );
+    let jumlahUangIN = nominalUang.reduce((total, num) => total + num, 0 )
+
+    let datalUangOUT = newData.filter( (item) => item.category === 'OUT' );
+    let nominalUangOUT = datalUangOUT.map((item) => item.nominal );
+    let jumlahUangOUT = nominalUangOUT.reduce((total, num) => total + num, 0 )
+    console.log(jumlahUangOUT)
+
     this.setState({
-      summary : [ ...this.state.summary, objek ]
+      pemasukan : jumlahUangIN,
+      transaksiIN : nominalUang.length,
+      pengeluaran : jumlahUangOUT,
+      transaksiOUT : nominalUangOUT.length,
+      sisaUang : jumlahUangIN - jumlahUangOUT,
+      persentaseUang : (jumlahUangIN - jumlahUangOUT) / jumlahUangIN * 100,
+      summary : newData
     })
+    
   }
 
-  componentDidMount() {
+  fnHitung() {
     let datalUangIN = this.state.summary.filter( (item) => item.category === 'IN' );
     let nominalUang = datalUangIN.map((item) => item.nominal );
     let jumlahUangIN = nominalUang.reduce((total, num) => total + num )
@@ -63,6 +82,14 @@ class App extends React.Component {
       sisaUang : jumlahUangIN - jumlahUangOUT,
       persentaseUang : (jumlahUangIN - jumlahUangOUT) / jumlahUangIN * 100
     })
+  }
+
+  componentDidMount() {
+    if(this.state.summary.length < 1 ) {
+      console.log('ok')
+    } else {
+      this.fnHitung()
+    }
   }
 
   render() {
@@ -115,6 +142,7 @@ class App extends React.Component {
         </div>
 
         <div className='row mt-4'>
+          {this.state.summary.length < 1 && <Alert/>}
           {this.state.summary.map((sum, index) => {
           return (
               <div key={index} className='mb-3 col-12 d-flex justify-content-between align-items-center'>
@@ -140,123 +168,19 @@ class App extends React.Component {
   }
 }
 
-class ModalCreate extends React.Component {
+
+class Alert extends React.Component {
+
   constructor() {
-    super();
-    this.state = {
-      show : false,
-      deskripsi : '',
-      nominal : 0,
-      tanggal : '',
-      category: ''
-    }
-
-    this.handleClose = this.handleClose.bind(this);
-    this.handleShow = this.handleShow.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-    this.tambahItem = this.tambahItem.bind(this);
+    super()
   }
 
-  handleClose() {
-    this.setState({
-      show: false
-    }) 
-  }
-
-  handleShow() {
-    this.setState({
-      show: true,
-      category : this.props.category
-    })
-  }
-
-  handleChange(evt) {
-    this.setState ({
-      [evt.target.name] : evt.target.value
-    })
-
-    console.log(this.state)
-  }
-
-  tambahItem() {
-    const data =  {
-      deskripsi : this.state.deskripsi,
-      nominal : parseInt(this.state.nominal),
-      tanggal : this.state.tanggal,
-      category: this.state.category
-    }
-    const fnTambahItem = this.props.action;
-    fnTambahItem(data);
-    this.setState({
-      show: false
-    }) 
-  }
 
   render() {
     return (
-      <>
-      <button onClick={this.handleShow} className={this.props.variant}>{this.props.text}<i className={this.props.icon}></i></button>
-
-        <Modal show={this.state.show} onHide={this.handleClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>{this.props.modalHeading}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-          <div className="mb-3">
-            <label className="form-label">Deskripsi</label>
-            <input 
-            type="text" 
-            className="form-control" 
-            placeholder="Masukan Deskripsi" 
-            name= "deskripsi" 
-            value={this.state.deskripsi} 
-            onChange={this.handleChange}
-            />
-        </div>
-
-        <div className="mb-3">
-            <label className="form-label">Nominal</label>
-            <input 
-            type="number" 
-            className="form-control" 
-            placeholder="Masukan Nominal" 
-            name= "nominal" 
-            value={this.state.nominal} 
-            onChange={this.handleChange}
-            />
-        </div>
-
-        <div className="mb-3">
-            <label className="form-label">Tanggal</label>
-            <input 
-            type="date" 
-            className="form-control" 
-            placeholder="Masukan Tanggal" 
-            name= "tanggal" 
-            value={this.state.tanggal} 
-            onChange={this.handleChange}
-            />
-        </div>
-
-            <input 
-            type="hidden" 
-            className="form-control" 
-            placeholder="Masukan deskripsi" 
-            name= "categoryl" 
-            value={this.state.category} 
-            onChange={this.handleChange}
-            />
-
-          </Modal.Body>
-          <Modal.Footer>
-            <button className={this.props.variant} onClick={this.tambahItem}>
-              Save
-            </button>
-          </Modal.Footer>
-        </Modal>
-      </>
-    )
+      <h1>Data kosong</h1> )
   }
 }
+
 
 export default App;
